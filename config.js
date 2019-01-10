@@ -48,12 +48,6 @@ var config = {
         url: 'https://testnet-insight.litecoinz.org:443',
       },
     },
-    bch: {
-      livenet: {
-        provider: 'insight',
-        url: 'https://bch-insight.bitpay.com',
-      },
-    },
   },
   pushNotificationsOpts: {
     templatePath: './lib/templates',
