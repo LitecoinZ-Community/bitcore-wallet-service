@@ -24,13 +24,6 @@ var config = {
       uri: 'mongodb://localhost:27017/bws',
     },
   },
-  lockOpts: {
-    //  To use locker-server, uncomment this:
-    lockerServer: {
-      host: 'localhost',
-      port: 3231,
-    },
-  },
   messageBrokerOpts: {
     //  To use message broker server, uncomment this:
     messageBrokerServer: {
@@ -40,12 +33,10 @@ var config = {
   blockchainExplorerOpts: {
     ltz: {
       livenet: {
-        provider: 'insight',
-        url: 'https://insight.litecoinz.org:443',
+        url: 'https://api.litecoinz.org',
       },
       testnet: {
-        provider: 'insight',
-        url: 'https://testnet-insight.litecoinz.org:443',
+        url: 'https://api.litecoinz.org',
       },
     },
   },
@@ -55,10 +46,10 @@ var config = {
     defaultUnit: 'ltz',
     subjectPrefix: '',
     pushServerUrl: 'https://fcm.googleapis.com/fcm',
-    authorizationKey: '',
+    authorizationKey: 'You_have_to_put_something_here',
   },
   fiatRateServiceOpts: {
-    defaultProvider: 'BitPay',
+    defaultProvider: 'LitecoinZ',
     fetchInterval: 60, // in minutes
   },
   // To use email notifications uncomment this:
@@ -72,16 +63,18 @@ var config = {
   //  defaultLanguage: 'en',
   //  defaultUnit: 'ltz',
   //  publicTxUrlTemplate: {
-  //    livenet: 'https://insight.litecoinz.org/tx/{{txid}}',
-  //    testnet: 'https://testnet-insight.litecoinz.org/tx/{{txid}}',
+  //    ltz: {
+  //      livenet: 'https://insight.litecoinz.org/#/tx/{{txid}}',
+  //      testnet: 'https://test-insight.litecoinz.org/#/tx/{{txid}}',
+  //    }
   //  },
-  //},
-  //
+  // },
   // To use sendgrid:
-  // var sgTransport = require('nodemail-sendgrid-transport');
-  // mailer:sgTransport({
-  //  api_user: xxx,
-  //  api_key: xxx,
-  // });
+  // const sgMail = require('@sendgrid/mail');
+  // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  //
+  //
+  // //then add:
+  // mailer: sgMail,
 };
 module.exports = config;

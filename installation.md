@@ -29,8 +29,7 @@ npm start
 ### Configuration
 Configuration for all required modules can be specified in https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/config.js
 
-BWS is composed of 5 separate node services -
-Locker - locker/locker.js
+BWS is composed of 4 separate node services -
 Message Broker - messagebroker/messagebroker.js
 Blockchain Monitor - bcmonitor/bcmonitor.js (This service talks to the Blockchain Explorer service configured under blockchainExplorerOpts - see Configure blockchain service below.)
 Email Service - emailservice/emailservice.js
@@ -45,16 +44,6 @@ Example configuration for connecting to the MongoDB instance:
     },
   }
 ```
-#### Configure Locker service
-Example configuration for connecting to locker service:
-```javascript
-  lockOpts: {
-    lockerServer: {
-      host: 'localhost',
-      port: 3231,
-    },
-  }
-```
 
 #### Configure Message Broker service
 Example configuration for connecting to message broker service:
@@ -66,19 +55,21 @@ Example configuration for connecting to message broker service:
   }
 ```
 
-#### Configure blockchain service
+#### Configure blockchain service. Bitcore v8 is required.
 Note: this service will be used by blockchain monitor service as well as by BWS itself.
 An example of this configuration is:
 ```javascript
   blockchainExplorerOpts: {
-    livenet: {
-      provider: 'insight',
-      url: 'https://insight.litecoinz.org:443',
-    },
-    testnet: {
-      provider: 'insight',
-      url: 'https://testnet-insight.litecoinz.org:443',
-    },
+      'ltz': {
+        livenet: {
+            provider: 'v8',
+            url: 'https://insight.litecoinz.org:443',
+         },
+        testnet: {
+            provider: 'v8',
+            url: 'https://test-insight.litecoinz.org:443',
+         },
+      },
   }
 ```
 

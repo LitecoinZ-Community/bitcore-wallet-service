@@ -1,10 +1,6 @@
 
 # bitcore-wallet-service-ltz
 
-[![NPM Package](https://img.shields.io/npm/v/bitcore-wallet-service-ltz.svg?style=flat-square)](https://www.npmjs.org/package/bitcore-wallet-service-ltz)
-[![Build Status](https://img.shields.io/travis/LitecoinZ-Community/bitcore-wallet-service-ltz.svg?branch=master&style=flat-square)](https://travis-ci.org/LitecoinZ-Community/bitcore-wallet-service-ltz)
-[![Coverage Status](https://coveralls.io/repos/LitecoinZ-Community/bitcore-wallet-service-ltz/badge.svg?branch=master)](https://coveralls.io/r/LitecoinZ-Community/bitcore-wallet-service-ltz?branch=master)
-
 A Multisig HD Bitcore Wallet Service.
 
 # Description
@@ -12,8 +8,8 @@ A Multisig HD Bitcore Wallet Service.
 Bitcore Wallet Service facilitates multisig HD wallets creation and operation through a (hopefully) simple and intuitive REST API.
 
 BWS can usually be installed within minutes and accommodates all the needed infrastructure for peers in a multisig wallet to communicate and operate – with minimum server trust.
-
-See [Bitcore-wallet-client](https://github.com/LitecoinZ-Community/bitcore-wallet-client-ltz) for the *official* client library that communicates to BWS and verifies its response. Also check [Bitcore-wallet](https://github.com/bitpay/bitcore-wallet) for a simple CLI wallet implementation that relies on BWS.
+  
+See [bitcore-wallet-client-ltz](https://github.com/LitecoinZ-Community/bitcore-wallet-client-ltz) for the *LitecoinZ fork* client library that communicates to BWS and verifies its response. Also check [Bitcore-wallet](https://github.com/bitpay/bitcore-wallet) for a simple CLI wallet implementation that relies on BWS.
 
 BWS is been used in production enviroments for [Copay Wallet](https://copay.io), [Bitpay App wallet](https://bitpay.com/wallet) and others.  
 
@@ -22,16 +18,27 @@ More about BWS at https://blog.bitpay.com/announcing-the-bitcore-wallet-suite/
 # Getting Started
 ```
  git clone https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz.git
- cd bitcore-wallet-service-ltz && npm start
+ cd bitcore-wallet-service-ltz
+ npm install
+ npm start
 ```
+
 
 This will launch the BWS service (with default settings) at `http://localhost:3232/bws/api`.
 
 BWS needs mongoDB. You can configure the connection at `config.js`
 
-BWS supports SSL and Clustering. For a detailed guide on installing BWS with extra features see [Installing BWS](https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/installation.md).
+BWS supports SSL and Clustering. For a detailed guide on installing BWS with extra features see [Installing BWS](https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/installation.md). 
 
 BWS uses by default a Request Rate Limitation to CreateWallet endpoint. If you need to modify it, check defaults.js' `Defaults.RateLimit`
+
+# Using BWS with PM2
+
+BWS can be used with PM2 with the provided `app.js` script: 
+ 
+```
+  pm2 start app.js --name "bitcore-wallet-service-ltz"
+```
 
 # Security Considerations
  * Private keys are never sent to BWS. Copayers store them locally.
@@ -42,7 +49,41 @@ BWS uses by default a Request Rate Limitation to CreateWallet endpoint. If you n
   * Addresses and change addresses are derived independently and locally by the copayers from their local data.
   * TX Proposals templates are signed by copayers and verified by others, so the BWS cannot create or tamper with them.
 
+# Using SSL
+
+  You can add your certificates at the config.js using:
+
+``` json
+   https: true,
+   privateKeyFile: 'private.pem',
+   certificateFile: 'cert.pem',
+  ////// The following is only for certs which are not
+  ////// trusted by nodejs 'https' by default
+  ////// CAs like Verisign do not require this
+  // CAinter1: '', // ex. 'COMODORSADomainValidationSecureServerCA.crt'
+  // CAinter2: '', // ex. 'COMODORSAAddTrustCA.crt'
+  // CAroot: '', // ex. 'AddTrustExternalCARoot.crt'
+```
+
+@dabura667 made a report about how to use letsencrypt with BWS: https://github.com/bitpay/bitcore-wallet-service/issues/423
+  
+
+# TX proposal life cycle
+
+Tx proposal need to be:
+ 1. First created via /v?/txproposal
+      -> This will create a 'temporary' TX proposal, returning the object, but not locking the inputs
+ 2. Then published via  /v?/txproposal/:id/publish
+      -> This publish the tx proposal to all copayers, looking the inputs. The TX proposal can be `deleted` also, after been published.
+ 3. Then signed via /v?/txproposal/:id/signature for each copayer
+ 4. Then broadcasted to the p2p network via /v?/txproposal/:id/broadcast
+
+
+
 # REST API
+
+Note: all currency amounts are in units of satoshis (1/100,000,000 of a LitecoinZ).
+
 ## Authentication
 
   In order to access a wallet, clients are required to send the headers:
@@ -52,7 +93,7 @@ BWS uses by default a Request Rate Limitation to CreateWallet endpoint. If you n
 ```
 Identity is the Peer-ID, this will identify the peer and its wallet. Signature is the current request signature, using `requestSigningKey`, the `m/1/1` derivative of the Extended Private Key.
 
-See [Bitcore Wallet Client](https://github.com/LitecoinZ-Community/bitcore-wallet-client-ltz/blob/master/lib/api.js#L73) for implementation details.
+See [Bitcore Wallet Client LTZ](https://github.com/LitecoinZ-Community/bitcore-wallet-client-ltz/blob/master/lib/api.js#L73) for implementation details.
 
 
 ## GET Endpoints
@@ -62,11 +103,11 @@ Returns:
  * Wallet object. (see [fields on the source code](https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/lib/model/wallet.js)).
 
 `/v1/txhistory/`: Get Wallet's transaction history
-
+ 
 Optional Arguments:
  * skip: Records to skip from the result (defaults to 0)
  * limit: Total number of records to return (return all available records if not specified).
-
+ 
 Returns:
  * History of incoming and outgoing transactions of the wallet. The list is paginated using the `skip` & `limit` params. Each item has the following fields:
  * action ('sent', 'received', 'moved')
@@ -79,16 +120,20 @@ Returns:
  * creatorName
  * message
  * actions array ['createdOn', 'type', 'copayerId', 'copayerName', 'comment']
-
-
-`/v1/txproposals/`:  Get Wallet's pending transaction proposals and their status
+  
+ 
+`/v2/txproposals/`:  Get Wallet's pending transaction proposals and their status
 Returns:
  * List of pending TX Proposals. (see [fields on the source code](https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/lib/model/txproposal.js))
 
-`/v1/addresses/`: Get Wallet's main addresses (does not include change addresses)
+
+`/v4/addresses/`: Get Wallet's main addresses (does not include change addresses)
+
+Optional Arguments:
+ * ignoreMaxGap: [false] Ignore checking less that 20 unused addresses (BIP44 GAP)
 
 Returns:
- * List of Addresses object: (https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/lib/model/address.js)).  This call is mainly provided so the client check this addresses for incoming transactions (using a service like [Insight](https://insight.is)
+ * List of Addresses object: (https://github.com/LitecoinZ-Community/bitcore-ltz/blob/master/packages/bitcore-wallet-service-ltz/lib/model/address.js)).  This call is mainly provided so the client check this addresses for incoming transactions (using a service like [Insight](https://insight.is)
 
 `/v1/balance/`:  Get Wallet's balance
 
@@ -113,18 +158,18 @@ Optional Arguments:
 
 Returns:
  * The fiat exchange rate.
-
+ 
 ## POST Endpoints
 `/v1/wallets/`: Create a new Wallet
 
  Required Arguments:
- * name: Name of the wallet
- * m: Number of required peers to sign transactions
+ * name: Name of the wallet 
+ * m: Number of required peers to sign transactions 
  * n: Number of total peers on the wallet
  * pubKey: Wallet Creation Public key to check joining copayer's signatures (the private key is unknown by BWS and must be communicated
   by the creator peer to other peers).
 
-Returns:
+Returns: 
  * walletId: Id of the new created wallet
 
 
@@ -141,7 +186,7 @@ Returns:
  * copayerId: Assigned ID of the copayer (to be used on x-identity header)
  * wallet: Object with wallet's information
 
-`/v1/txproposals/`: Add a new transaction proposal
+`/v3/txproposals/`: Add a new temporary transaction proposal
 
 Required Arguments:
  * toAddress: RCPT LitecoinZ address.
@@ -155,8 +200,12 @@ Required Arguments:
 Returns:
  * TX Proposal object. (see [fields on the source code](https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/lib/model/txproposal.js)). `.id` is probably needed in this case.
 
+`/v2/txproposals/:id/publish`: Publish the previously created `temporary` tx proposal.
 
-`/v1/addresses/`: Request a new main address from wallet
+Returns:
+ * TX Proposal object. (see [fields on the source code](https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/lib/model/txproposal.js)).
+
+`/v3/addresses/`: Request a new main address from wallet . (creates an address on normal conditions)
 
 Returns:
  * Address object: (https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/lib/model/address.js)). Note that `path` is returned so client can derive the address independently and check server's response.
@@ -165,24 +214,24 @@ Returns:
 
 Required Arguments:
  * signatures:  All Transaction's input signatures, in order of appearance.
-
+  
 Returns:
  * TX Proposal object. (see [fields on the source code](https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/lib/model/txproposal.js)). `.status` is probably needed in this case.
-
+  
 `/v1/txproposals/:id/broadcast/`: Broadcast a transaction proposal
-
+ 
 Returns:
  * TX Proposal object. (see [fields on the source code](https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/lib/model/txproposal.js)). `.status` is probably needed in this case.
-
+  
 `/v1/txproposals/:id/rejections`: Reject a transaction proposal
-
+ 
 Returns:
  * TX Proposal object. (see [fields on the source code](https://github.com/LitecoinZ-Community/bitcore-wallet-service-ltz/blob/master/lib/model/txproposal.js)). `.status` is probably needed in this case.
 
 `/v1/addresses/scan`: Start an address scan process looking for activity.
 
  Optional Arguments:
- * includeCopayerBranches: Scan all copayer branches following BIP45 recommendation (defaults to false).
+ * includeCopayerBranches: Scan all copayer branches following BIP45 recommendation (defaults to false). 
 
 `/v1/txconfirmations/`: Subscribe to receive push notifications when the specified transaction gets confirmed.
 Required Arguments:
@@ -200,10 +249,10 @@ Required Arguments:
 
 `/v1/txconfirmations/:txid`: Unsubscribe from transaction `txid` and no longer listen to its confirmation.
 
-
+   
 # Push Notifications
   Recomended to complete config.js file:
-
+  
   * [GCM documentation to get your API key](https://developers.google.com/cloud-messaging/gcm)
   * [Apple's Notification guide to know how to get your certificates for APN](https://developer.apple.com/library/ios/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/Chapters/Introduction.html)
 
@@ -212,11 +261,10 @@ Required Arguments:
 `/v1/pushnotifications/subscriptions/`: Adds subscriptions for push notifications service at database.
 
 
-## DELETE Endopints
+## DELETE Endpoints
 `/v2/pushnotifications/subscriptions/`: Remove subscriptions for push notifications service from database.
 
+ 
 
 
 
-
-# bitcore-wallet-service-ltz
