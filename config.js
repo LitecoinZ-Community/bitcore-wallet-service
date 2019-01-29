@@ -53,22 +53,22 @@ var config = {
     fetchInterval: 60, // in minutes
   },
   // To use email notifications uncomment this:
-  // emailOpts: {
-  //  host: 'localhost',
-  //  port: 25,
-  //  ignoreTLS: true,
-  //  subjectPrefix: '[Wallet Service]',
-  //  from: 'wallet-service@bitcore.io',
-  //  templatePath: './lib/templates',
-  //  defaultLanguage: 'en',
-  //  defaultUnit: 'ltz',
-  //  publicTxUrlTemplate: {
-  //    ltz: {
-  //      livenet: 'https://insight.litecoinz.org/#/tx/{{txid}}',
-  //      testnet: 'https://test-insight.litecoinz.org/#/tx/{{txid}}',
-  //    }
-  //  },
-  // },
+  emailOpts: {
+    host: 'localhost',
+    port: 25,
+    ignoreTLS: true,
+    subjectPrefix: '[Wallet Service LTZ]',
+    from: 'wallet-service@litecoinz.org',
+    templatePath: './lib/templates',
+    defaultLanguage: 'en',
+    defaultUnit: 'ltz',
+    publicTxUrlTemplate: {
+      ltz: {
+        livenet: 'https://insight.litecoinz.org/#/tx/{{txid}}',
+        testnet: 'https://test-insight.litecoinz.org/#/tx/{{txid}}',
+      }
+    },
+  },
   // To use sendgrid:
   // const sgMail = require('@sendgrid/mail');
   // sgMail.setApiKey(process.env.SENDGRID_API_KEY);
